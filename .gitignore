@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.DS_Store
+
+results/
+data/manifest.csv
+data/**/*.heic_converted.jpg
+
+.ipynb_checkpoints/
+.pytest_cache/

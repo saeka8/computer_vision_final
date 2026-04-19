@@ -1,0 +1,14 @@
+numpy>=1.26
+opencv-python>=4.9
+scikit-learn>=1.4
+faiss-cpu>=1.8
+pillow>=10.2
+pillow-heif>=0.15
+torch>=2.2
+torchvision>=0.17
+timm>=1.0.9
+matplotlib>=3.8
+tqdm>=4.66
+pandas>=2.2
+streamlit>=1.33
+pytest>=8.0
