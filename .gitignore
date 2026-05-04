@@ -12,3 +12,9 @@ data/**/*.heic_converted.jpg
 
 .ipynb_checkpoints/
 .pytest_cache/
+
+
+*.jpg
+*.jpeg
+*.png
+data/
