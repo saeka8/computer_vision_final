@@ -29,13 +29,13 @@ from src.retrieve import build_method, embed_paths  # noqa: E402
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--method", required=True, choices=["deep", "classical"])
+    ap.add_argument("--method", required=True, choices=["deep", "cnn", "classical"])
     ap.add_argument("--out-dir", default=str(REPO_ROOT / "results"))
     args = ap.parse_args()
 
     samples = load_manifest()
     gallery = by_split(samples, "gallery")
-    train = by_split(samples, "gallery")  # reuse gallery for any fitting step
+    train = by_split(samples, "gallery")
 
     embedder = build_method(args.method)
     print(f"[{embedder.name}] fitting on {len(train)} images ...")
@@ -52,6 +52,9 @@ def main() -> int:
     index.build(vectors, [s.label for s in gallery], [str(s.path) for s in gallery])
 
     out = Path(args.out_dir) / args.method
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if hasattr(embedder, "save"):
+        embedder.save(out)
     index.save(out)
     print(f"saved index: {out}.faiss (+ {out}.json)")
     return 0

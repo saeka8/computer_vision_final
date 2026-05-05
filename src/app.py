@@ -27,7 +27,7 @@ from src.retrieve import build_method  # noqa: E402
 st.set_page_config(page_title="IE Tower Place Recognition", layout="wide")
 st.title("IE Tower — Visual Place Recognition")
 
-method = st.sidebar.selectbox("Method", ["deep", "classical"])
+method = st.sidebar.selectbox("Method", ["deep", "cnn", "classical"])
 k = st.sidebar.slider("Top-K", 1, 10, 5)
 
 index_path = REPO_ROOT / "results" / method
@@ -41,7 +41,10 @@ index.load(index_path)
 @st.cache_resource
 def get_embedder(name: str):
     e = build_method(name)
-    # classical needs a codebook — load from gallery
+    model_prefix = REPO_ROOT / "results" / name
+    if hasattr(e, "load") and e.load(model_prefix):
+        return e
+    # classical needs a codebook, cnn needs supervised fitting on gallery labels
     from src.data import by_split, load_manifest
 
     e.fit([s.path for s in by_split(load_manifest(), "gallery")])

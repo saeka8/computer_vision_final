@@ -32,7 +32,7 @@ from src.retrieve import build_method, embed_paths  # noqa: E402
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--method", required=True, choices=["deep", "classical"])
+    ap.add_argument("--method", required=True, choices=["deep", "cnn", "classical"])
     ap.add_argument("--in-dir", default=str(REPO_ROOT / "results"))
     ap.add_argument("--k", type=int, default=5)
     args = ap.parse_args()
@@ -48,7 +48,12 @@ def main() -> int:
     print(f"loaded index: {len(index)} gallery vectors, dim={index.dim}")
 
     embedder = build_method(args.method)
-    embedder.fit([s.path for s in by_split(samples, "gallery")])
+    model_prefix = Path(args.in_dir) / args.method
+    loaded = False
+    if hasattr(embedder, "load"):
+        loaded = bool(embedder.load(model_prefix))
+    if not loaded:
+        embedder.fit([s.path for s in by_split(samples, "gallery")])
     query_vecs = embed_paths([s.path for s in queries], embedder)
 
     truths = [s.label for s in queries]

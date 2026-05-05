@@ -5,7 +5,9 @@ Conventions:
 - The manifest CSV has columns: path, label, split.
 - "gallery" images are indexed and searched against; "query" images are
   held out and used at eval time; "train" images may be used by methods
-  that need fitting (e.g. VLAD's KMeans codebook).
+  that need fitting. In the current small-data setup, methods that need
+  supervision may also fit directly on gallery labels if no train split
+  is carved out.
 - Classes with a single image go into the gallery only — they can be
   retrieved but are never used as queries. This is flagged in the report.
 """
@@ -65,7 +67,7 @@ def make_splits(
     For classes with >=2 images we hold out ``max(1, round(n*query_frac))``
     images as queries; the rest go to the gallery. We do not carve out a
     dedicated "train" split by default — methods that need one can sample
-    from the gallery.
+    or fit from the gallery in this small-data baseline setup.
     """
     rng = random.Random(seed)
     by_label: dict[str, list[Path]] = defaultdict(list)
@@ -98,6 +100,11 @@ def write_manifest(samples: list[Sample], path: Path = MANIFEST_PATH) -> None:
 
 
 def load_manifest(path: Path = MANIFEST_PATH) -> list[Sample]:
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Manifest not found at {path}. Create the dataset under "
+            f"{DATA_DIR}/<place_name>/... and run `python scripts/prepare_data.py`."
+        )
     samples: list[Sample] = []
     with path.open() as f:
         r = csv.DictReader(f)

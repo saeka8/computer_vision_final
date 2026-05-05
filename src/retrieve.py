@@ -41,6 +41,10 @@ def build_method(method: str) -> Embedder:
         from src.features.deep import DinoV2Embedder
 
         return DinoV2Embedder()
+    if method == "cnn":
+        from src.features.cnn import SimpleCNNEmbedder
+
+        return SimpleCNNEmbedder()
     if method == "classical":
         from src.features.classical import SiftVladEmbedder
 
