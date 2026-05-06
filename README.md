@@ -25,6 +25,13 @@ tests/          # pytest suite
 report/         # final write-up + figures
 ```
 
+## Image data access
+
+Image folders (`data/` and `test/`) are gitignored. Download them from Dropbox:
+
+- Gallery / training images (`data/`): https://www.dropbox.com/scl/fo/bc68mnw9oyms5iq9ognig/ABuEVZpKPCAByLYPezAbAlU?rlkey=rjqw4izex08cjbkqj3tzs2l73&st=f4wxtvir&dl=0
+- Test / query images (`test/`): https://www.dropbox.com/scl/fo/5e7vdwn8wyfqnfwn0tv5r/AOdUS4TgyuWhGJSySAKc89o?rlkey=tjqslr9xh6fup4sbgntu3s510&dl=0
+
 ## Setup
 
 ```bash
