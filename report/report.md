@@ -8,7 +8,7 @@
 
 ## Abstract
 
-This report presents an image-retrieval system for Visual Place Recognition (VPR) applied to the IE Tower campus building. Given a query photograph taken anywhere in the building, the system returns the top-K most visually similar gallery images and predicts the corresponding location. Three retrieval pipelines are implemented and evaluated under a shared experimental harness: (1) a classical pipeline based on SIFT local features aggregated with Vector of Locally Aggregated Descriptors (VLAD), (2) a deep-learning pipeline based on frozen DINOv2 ViT-S/14 global embeddings, and (3) a supervised CNN baseline — a small convolutional network trained on gallery labels whose penultimate embedding layer is reused for retrieval. All three methods produce L2-normalized vectors stored in a FAISS flat inner-product index and are evaluated using Top-1 accuracy, Top-5 accuracy, Precision at 5 (P@5), Mean Average Precision (mAP), and per-query index-search latency. The dataset comprises approximately 945 images across 27 indoor locations: 636 gallery images (the full training set) and 309 held-out test queries from a separate collection. On 309 test queries, the DINOv2 pipeline achieves 74.8% Top-1 accuracy and 77.4% mAP; the SIFT+VLAD baseline achieves 53.7% Top-1 accuracy and 58.3% mAP; and the CNN baseline achieves 29.1% Top-1 accuracy and 36.9% mAP. These results confirm that self-supervised Vision Transformer features substantially outperform both classical local-feature aggregation and a small supervised CNN for indoor place recognition at this scale.
+This report presents an image-retrieval system for Visual Place Recognition (VPR) applied to the IE Tower campus building. Given a query photograph taken anywhere in the building, the system returns the top-K most visually similar gallery images and predicts the corresponding location. Three retrieval pipelines are implemented and evaluated under a shared experimental harness: (1) a classical pipeline based on SIFT local features aggregated with Vector of Locally Aggregated Descriptors (VLAD), (2) a deep-learning pipeline based on frozen DINOv2 ViT-S/14 global embeddings, and (3) a supervised CNN baseline — a small convolutional network trained on gallery labels whose penultimate embedding layer is reused for retrieval. All three methods produce L2-normalized vectors stored in a FAISS flat inner-product index and are evaluated using Top-1 accuracy, Top-5 accuracy, Precision at 5 (P@5), Mean Average Precision (mAP), and per-query index-search latency. The dataset comprises approximately 945 images across 25 indoor locations: 636 gallery images (the full training set) and 309 held-out test queries from a separate collection. On 309 test queries, the DINOv2 pipeline achieves 74.8% Top-1 accuracy and 77.4% mAP; the SIFT+VLAD baseline achieves 53.7% Top-1 accuracy and 58.3% mAP; and the CNN baseline achieves 29.1% Top-1 accuracy and 36.9% mAP. These results confirm that self-supervised Vision Transformer features substantially outperform both classical local-feature aggregation and a small supervised CNN for indoor place recognition at this scale.
 
 ---
 
@@ -16,13 +16,13 @@ This report presents an image-retrieval system for Visual Place Recognition (VPR
 
 Visual Place Recognition is the problem of determining where a photograph was taken by matching it against a database of geo-tagged or location-tagged reference images. It is a foundational capability in robot navigation, augmented reality, and pedestrian wayfinding systems. While large-scale outdoor VPR has been studied extensively, indoor environments present unique challenges: repeated textures (corridors, walls, ceilings), variable lighting conditions, a high degree of structural symmetry, and a limited number of training examples per location.
 
-This project constructs a VPR system for the IE Tower building in Madrid. A dataset of approximately 945 photographs was collected across 27 semantically meaningful indoor locations, including common areas, a robotics laboratory, hallways, stairwells, and the adjacent Caleido shopping center. Three methodologically distinct retrieval systems are developed and compared:
+This project constructs a VPR system for the IE Tower building in Madrid. A dataset of approximately 945 photographs was collected across 25 semantically meaningful indoor locations, including common areas, a robotics laboratory, hallways, stairwells, and the adjacent Caleido shopping center. Three methodologically distinct retrieval systems are developed and compared:
 
 1. A **classical pipeline** using SIFT keypoint descriptors aggregated into a compact image-level representation via VLAD, followed by PCA whitening for dimensionality reduction.
 2. A **deep-learning pipeline** using the frozen CLS-token embeddings of a DINOv2 Vision Transformer (ViT-S/14), a self-supervised model trained on a large-scale visual similarity objective.
 3. A **CNN baseline** using a small convolutional network supervised on gallery location labels; after training, the embedding layer is extracted and used for retrieval in the same FAISS framework.
 
-All three pipelines share the same data loading, index construction, evaluation, and demo components, ensuring a structurally fair comparison. The rest of this report is organized as follows. Section 2 reviews related work. Section 3 describes the dataset. Section 4 details the system architecture. Section 5 describes the feature extraction methodology for each pipeline. Section 6 covers the index and retrieval design. Section 7 defines the evaluation protocol and metrics. Section 8 presents results and analysis. Section 9 discusses limitations and future directions. Section 10 concludes.
+All three pipelines share the same data loading, index construction, evaluation, and demo components, ensuring a structurally fair comparison. The rest of this report is organized as follows. Section 2 reviews related work. Section 3 describes the dataset. Section 4 details the system architecture. Section 5 describes the feature extraction methodology for each pipeline. Section 6 covers the index and retrieval design. Section 7 defines the evaluation protocol and metrics. Section 8 presents results and analysis. Section 9 discusses limitations and future directions. Section 10 concludes. Section 11 lists team contributions.
 
 ---
 
@@ -30,7 +30,7 @@ All three pipelines share the same data loading, index construction, evaluation,
 
 **Classical Feature-Based Retrieval.** Scale-Invariant Feature Transform (SIFT), introduced by Lowe (2004), detects and describes local image regions that are invariant to scale, rotation, and partial illumination changes. For place recognition, individual keypoint descriptors cannot directly serve as image-level representations and must be aggregated. Bag of Words (BoW) methods quantize each descriptor to a visual vocabulary word and represent an image as a histogram. VLAD, proposed by Jegou et al. (2010), improves on BoW by accumulating the signed residuals between descriptors and their assigned vocabulary centers, preserving richer geometric structure while remaining compact. VLAD representations benefit from intra-normalization (power-law normalization) and final L2 normalization, both of which are applied in this work.
 
-**Deep Learning for Place Recognition.** Self-supervised Vision Transformers have become the state of the art for visual similarity. DINOv2 (Oquab et al., 2023) trains a ViT using self-distillation with no labels, producing features that are directly competitive with supervised models on dense prediction and retrieval tasks. The CLS token of DINOv2, which aggregates global image information through multi-head self-attention, has been shown to be particularly effective for image-level retrieval without any task-specific adaptation. With only approximately 636 gallery images spread across 27 classes, frozen pretrained features are the appropriate choice, as fine-tuning the backbone would risk overfitting on the limited intra-class variation.
+**Deep Learning for Place Recognition.** Self-supervised Vision Transformers have become the state of the art for visual similarity. DINOv2 (Oquab et al., 2023) trains a ViT using self-distillation with no labels, producing features that are directly competitive with supervised models on dense prediction and retrieval tasks. The CLS token of DINOv2, which aggregates global image information through multi-head self-attention, has been shown to be particularly effective for image-level retrieval without any task-specific adaptation. With only approximately 636 gallery images spread across 25 classes, frozen pretrained features are the appropriate choice, as fine-tuning the backbone would risk overfitting on the limited intra-class variation.
 
 **Approximate Nearest Neighbor Search.** Retrieval systems at scale rely on approximate nearest neighbor (ANN) indexes. FAISS (Johnson et al., 2019) provides highly optimized exact and approximate indexes. For a dataset of the size considered here, an exact flat inner-product index is used, as it provides deterministic results and the dataset is small enough that exhaustive search is negligible in latency.
 
@@ -40,7 +40,7 @@ All three pipelines share the same data loading, index construction, evaluation,
 
 ### 3.1 Collection
 
-Photographs were collected at named indoor locations within the IE Tower building and the adjoining Caleido commercial complex. Each location corresponds to a semantically distinct area. Images were captured across multiple collection sessions by different team members using mobile phone cameras and stored in JPEG or JPEG-encoded formats. The combined dataset comprises approximately 945 images across 27 location classes.
+Photographs were collected at named indoor locations within the IE Tower building and the adjoining Caleido commercial complex. Each location corresponds to a semantically distinct area. Images were captured across multiple collection sessions by different team members using mobile phone cameras and stored in JPEG or JPEG-encoded formats. The combined dataset comprises approximately 945 images across 25 location classes.
 
 The folder structure follows a flat convention: each subdirectory of `data/` is named after one location label and contains all training images belonging to that location. Held-out test images follow the same naming convention under a separate `test/` directory. The data preparation script performs light normalization before use: it renames folders with non-standard characters and removes any zero-byte placeholder files.
 
@@ -50,7 +50,7 @@ The dataset is organized into two physically separate directories rather than a 
 
 This design ensures that gallery images serve a dual role — fitting data-dependent components (such as the VLAD codebook or CNN weights) and forming the indexed database — while test images serve exclusively as evaluation queries. There is no overlap between the two sets.
 
-The split yields **636 gallery images** and **309 test query images** across 27 location classes.
+The split yields **636 gallery images** and **309 test query images** across 25 location classes.
 
 ### 3.3 Class Distribution
 
@@ -60,14 +60,14 @@ Table 1 summarizes the aggregate dataset statistics.
 
 | Metric | Value |
 |---|---|
-| Total location classes | 27 |
+| Total location classes | 25 |
 | Gallery images (`data/`) | 636 |
 | Test query images (`test/`) | 309 |
 | Total images | ~945 |
-| Average gallery images per class | ~23.6 |
-| Average test queries per class | ~11.4 |
+| Average gallery images per class | ~25.4 |
+| Average test queries per class | ~12.4 |
 
-The 27 location classes cover a mix of IE Tower building areas (16th floor offices, 5th floor hallway and stairs, bathroom, elevator, gym, robotics lab, entrance balloon installation) and the adjoining Caleido commercial complex (Starbacks, Ocine cinema, Makan, La Desayuneria, Five Guys, New York Burger, Honest Green, Kanbun, Lassal, Aromas, Ecoalf, Bareto, Rosselimac, Santagloria, Masqmenos, ball sculpture, colorful statue, and the Do Eat restaurants on the 4th floor and exterior). Class sizes vary across the dataset; Caleido Starbacks and Caleido Ocine are among the most image-rich classes owing to the variety of viewpoints available at those locations.
+The 25 location classes cover a mix of IE Tower building areas (16th floor offices, 5th floor hallway and stairs, bathroom, elevator, cafeteria, robotics lab, entrance balloon installation) and the adjoining Caleido commercial complex (Starbacks, Ocine cinema, Makan, La Desayuneria, Five Guys, New York Burger, Honest Green, Kanbun, Lassal, Aromas, Ecoalf, Bareto, Rosselimac, Santagloria, Masqmenos, ball sculpture, and colorful statue). Class sizes vary across the dataset; Caleido Starbacks and Caleido Ocine are among the most image-rich classes owing to the variety of viewpoints available at those locations.
 
 ---
 
@@ -210,7 +210,7 @@ The CNN baseline is evaluated identically to the other two methods: the saved mo
 
 | Metric | Value |
 |---|---|
-| Total location classes | 27 |
+| Total location classes | 25 |
 | Gallery images (`data/`) | 636 |
 | Test query images (`test/`) | 309 |
 | Total images | ~945 |
@@ -233,11 +233,11 @@ Table 2 compares all three retrieval methods on the 309 held-out test queries (K
 
 **Why DINOv2 leads.** The DINOv2 ViT-S/14 processes the entire image through multi-head self-attention, allowing it to integrate global spatial context, object-level features, signage, and scene geometry into a single 384-dimensional descriptor. This representation encodes location-specific semantic content — the distinctive decor of a restaurant, the equipment layout of a robotics laboratory, the architectural character of an atrium — that is highly discriminative even across visually similar spaces. Crucially, these features were learned from a large-scale curated dataset (LVD-142M) and generalize to the IE Tower domain without any fine-tuning.
 
-**Why the classical method outperforms the CNN.** The CNN baseline achieves only 29.1% Top-1 accuracy despite receiving explicit location-label supervision during training. This counterintuitive result is explained by the dataset scale and the nature of the retrieval task. With 636 gallery images split across 27 classes (~23.6 per class on average), training a convolutional network from scratch is highly prone to overfitting — the model memorizes per-instance appearance rather than learning a generalizable embedding geometry. The SIFT+VLAD pipeline, by contrast, uses hand-crafted features that do not require any learning of visual primitives; SIFT descriptors are already invariant to scale, rotation, and moderate illumination changes, and the VLAD aggregation benefits from PCA whitening that decorrelates the embedding dimensions. Importantly, the classical pipeline now persists its fitted codebook and PCA model to disk, ensuring the same parameters are applied at both indexing and query time and eliminating any re-initialization variance. For retrieval specifically, where the embedding geometry must generalize to unseen test views, this regularized classical approach proves more robust than a small supervised network trained from scratch.
+**Why the classical method outperforms the CNN.** The CNN baseline achieves only 29.1% Top-1 accuracy despite receiving explicit location-label supervision during training. This counterintuitive result is explained by the dataset scale and the nature of the retrieval task. With 636 gallery images split across 25 classes (~25.4 per class on average), training a convolutional network from scratch is highly prone to overfitting — the model memorizes per-instance appearance rather than learning a generalizable embedding geometry. The SIFT+VLAD pipeline, by contrast, uses hand-crafted features that do not require any learning of visual primitives; SIFT descriptors are already invariant to scale, rotation, and moderate illumination changes, and the VLAD aggregation benefits from PCA whitening that decorrelates the embedding dimensions. Importantly, the classical pipeline now persists its fitted codebook and PCA model to disk, ensuring the same parameters are applied at both indexing and query time and eliminating any re-initialization variance. For retrieval specifically, where the embedding geometry must generalize to unseen test views, this regularized classical approach proves more robust than a small supervised network trained from scratch.
 
 **Gap between DINOv2 and classical.** DINOv2 outperforms SIFT+VLAD by 21.1 percentage points in Top-1 accuracy (74.8% vs. 53.7%) and by 19.1 points in mAP (77.4% vs. 58.3%). This is a substantial but not overwhelming gap, reflecting the fact that a well-implemented classical pipeline with proper model persistence can capture meaningful location information in an indoor setting.
 
-**P@5 interpretation.** P@5 for the deep method (62.1%) is lower than Top-5 accuracy (85.8%). This is expected: Top-5 accuracy asks whether the correct class appears anywhere in the top five results, while P@5 asks what fraction of all five results are correct. With 27 classes and a finite gallery, only a subset of the top-5 results will typically share the query's class even for a well-functioning system. The classical method shows a similar spread (P@5 44.5% vs. Top-5 70.6%).
+**P@5 interpretation.** P@5 for the deep method (62.1%) is lower than Top-5 accuracy (85.8%). This is expected: Top-5 accuracy asks whether the correct class appears anywhere in the top five results, while P@5 asks what fraction of all five results are correct. With 25 classes and a finite gallery, only a subset of the top-5 results will typically share the query's class even for a well-functioning system. The classical method shows a similar spread (P@5 44.5% vs. Top-5 70.6%).
 
 **Index-search latency.** All three methods achieve sub-millisecond FAISS search latency (0.018–0.035 ms mean), which is negligible for any interactive application. Total query latency is dominated by the embedding step: a DINOv2 forward pass on CPU takes on the order of 1–2 seconds per image, while the CNN inference is substantially faster. GPU acceleration would reduce DINOv2 latency to tens of milliseconds and make real-time deployment practical.
 
@@ -249,9 +249,9 @@ Table 2 compares all three retrieval methods on the 309 held-out test queries (K
 
 **Statistical reliability.** With 309 test queries, each percentage point of Top-1 accuracy now corresponds to approximately 3.09 queries, making the reported figures substantially more reliable than a 37-query evaluation. Nonetheless, class-level analysis remains noisy for the smallest location classes.
 
-**Class imbalance.** The dataset spans 27 classes of varying size. Aggregate metrics are weighted by class frequency and therefore reflect performance on more image-rich locations (e.g., Caleido Starbacks, Caleido Ocine) more heavily than on less-represented ones. Per-class breakdown is not reported here but would be informative for identifying which locations are hardest to recognize.
+**Class imbalance.** The dataset spans 25 classes of varying size. Aggregate metrics are weighted by class frequency and therefore reflect performance on more image-rich locations (e.g., Caleido Starbacks, Caleido Ocine) more heavily than on less-represented ones. Per-class breakdown is not reported here but would be informative for identifying which locations are hardest to recognize.
 
-**CNN overfitting.** The CNN baseline underperforms even the classical pipeline, which is attributable to overfitting on a small supervised training set (~23.6 images per class). The model architecture and hyperparameters (12 epochs, lr = 10⁻³, no weight decay) were chosen without systematic hyperparameter search, and a more carefully regularized training procedure could potentially improve CNN performance.
+**CNN overfitting.** The CNN baseline underperforms even the classical pipeline, which is attributable to overfitting on a small supervised training set (~25.4 images per class). The model architecture and hyperparameters (12 epochs, lr = 10⁻³, no weight decay) were chosen without systematic hyperparameter search, and a more carefully regularized training procedure could potentially improve CNN performance.
 
 **Intra-class viewpoint variation.** Even with more images per class than the prior dataset, some locations may have gallery images concentrated from a narrow range of viewpoints. Queries taken from substantially different angles or under different lighting remain challenging for all methods.
 
@@ -289,7 +289,21 @@ Table 2 compares all three retrieval methods on the 309 held-out test queries (K
 
 This project implements and evaluates three end-to-end Visual Place Recognition pipelines for an indoor campus environment. The classical pipeline uses SIFT keypoint descriptors aggregated via VLAD with PCA whitening, yielding 128-dimensional embeddings. The CNN baseline uses a small supervised convolutional network trained on gallery labels, whose 128-dimensional penultimate embedding is reused for retrieval. The deep pipeline uses the frozen CLS token of a DINOv2 ViT-S/14, yielding 384-dimensional embeddings. All three pipelines share a FAISS-based retrieval index, a unified evaluation harness, and a Streamlit demo interface.
 
-Evaluated on 309 held-out test queries across 27 indoor locations, DINOv2 achieves 74.8% Top-1 accuracy and 77.4% mAP, the SIFT+VLAD classical pipeline achieves 53.7% Top-1 accuracy and 58.3% mAP, and the CNN baseline achieves 29.1% Top-1 accuracy and 36.9% mAP. Two findings stand out. First, frozen self-supervised Vision Transformer features substantially outperform both alternatives, confirming that large-scale pretraining transfers effectively to indoor place recognition without any fine-tuning. Second, the small supervised CNN underperforms the classical pipeline despite receiving explicit label supervision, illustrating that for retrieval tasks at limited data scale, generalizable feature geometry matters more than task-specific training. The classical pipeline's strong performance is also attributable to proper model persistence — saving the fitted codebook and PCA to disk ensures the same parameters are applied at indexing and query time. Index-search latency is sub-millisecond for all three methods, making the system suitable for interactive deployment given sufficient embedding throughput.
+Evaluated on 309 held-out test queries across 25 indoor locations, DINOv2 achieves 74.8% Top-1 accuracy and 77.4% mAP, the SIFT+VLAD classical pipeline achieves 53.7% Top-1 accuracy and 58.3% mAP, and the CNN baseline achieves 29.1% Top-1 accuracy and 36.9% mAP. Two findings stand out. First, frozen self-supervised Vision Transformer features substantially outperform both alternatives, confirming that large-scale pretraining transfers effectively to indoor place recognition without any fine-tuning. Second, the small supervised CNN underperforms the classical pipeline despite receiving explicit label supervision, illustrating that for retrieval tasks at limited data scale, generalizable feature geometry matters more than task-specific training. The classical pipeline's strong performance is also attributable to proper model persistence — saving the fitted codebook and PCA to disk ensures the same parameters are applied at indexing and query time. Index-search latency is sub-millisecond for all three methods, making the system suitable for interactive deployment given sufficient embedding throughput.
+
+---
+
+## 11. Contributions
+
+The following table summarizes each team member's primary contributions to the project, traced from the repository commit history and code ownership.
+
+| Team Member | Primary Contributions |
+|---|---|
+| **Seaka** | Dataset collection (Caleido images, 16th floor, hallways); data preparation pipeline (`src/data.py`, `scripts/prepare_data.py`); test set creation and database management; CNN baseline implementation (`src/features/cnn.py`); running all three evaluations and committing results; Streamlit demo updates (`src/app.py`) |
+| **Ryan** | Core retrieval architecture (`src/index.py`, `src/retrieve.py`, `src/evaluate.py`, `scripts/build_index.py`, `scripts/run_eval.py`); DINOv2 deep feature pipeline (`src/features/deep.py`); initial Caleido data collection; linear probe experiment design |
+| **Elias** | IE Tower dataset collection across all building areas (cafeteria, robotics lab, bathroom, elevator, gym, 5th floor hallway and stairs); image upload, quality review, and data cleanup |
+| **Giovanni** | SIFT+VLAD classical retrieval pipeline (`src/features/classical.py`), including SIFT keypoint extraction, codebook learning via Mini-Batch K-Means, VLAD aggregation, PCA whitening, and fitted-model persistence |
+| **Salmane** | Full project report (`report/report.md`): methodology write-up, dataset documentation, evaluation protocol, results analysis, and discussion; metric verification against committed results; final PR integration and review |
 
 ---
 
