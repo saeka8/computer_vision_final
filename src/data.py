@@ -1,22 +1,16 @@
-"""Dataset manifest, image loading, and train/gallery/query splits.
+"""Dataset helpers for training data and held-out test images.
 
 Conventions:
 - Every image belongs to exactly one class (the folder name under ``data/``).
+- Held-out evaluation images live under ``test/`` with the same folder naming.
 - The manifest CSV has columns: path, label, split.
-- "gallery" images are indexed and searched against; "query" images are
-  held out and used at eval time; "train" images may be used by methods
-  that need fitting. In the current small-data setup, methods that need
-  supervision may also fit directly on gallery labels if no train split
-  is carved out.
-- Classes with a single image go into the gallery only — they can be
-  retrieved but are never used as queries. This is flagged in the report.
+- The current workflow uses every image in ``data/`` as ``gallery`` so
+  indexing and fitting can use the full training set.
 """
 
 from __future__ import annotations
 
 import csv
-import random
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,6 +27,7 @@ except ImportError:
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
+TEST_DIR = REPO_ROOT / "test"
 MANIFEST_PATH = DATA_DIR / "manifest.csv"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
@@ -57,37 +52,9 @@ def discover_images(data_dir: Path = DATA_DIR) -> list[tuple[Path, str]]:
     return pairs
 
 
-def make_splits(
-    pairs: list[tuple[Path, str]],
-    query_frac: float = 0.25,
-    seed: int = 42,
-) -> list[Sample]:
-    """Stratified split. 1-image classes go fully to gallery (no query).
-
-    For classes with >=2 images we hold out ``max(1, round(n*query_frac))``
-    images as queries; the rest go to the gallery. We do not carve out a
-    dedicated "train" split by default — methods that need one can sample
-    or fit from the gallery in this small-data baseline setup.
-    """
-    rng = random.Random(seed)
-    by_label: dict[str, list[Path]] = defaultdict(list)
-    for path, label in pairs:
-        by_label[label].append(path)
-
-    samples: list[Sample] = []
-    for label, paths in by_label.items():
-        paths = sorted(paths)
-        rng.shuffle(paths)
-        if len(paths) < 2:
-            samples.extend(Sample(p, label, "gallery") for p in paths)
-            continue
-        n_query = max(1, round(len(paths) * query_frac))
-        n_query = min(n_query, len(paths) - 1)  # leave at least 1 in gallery
-        for p in paths[:n_query]:
-            samples.append(Sample(p, label, "query"))
-        for p in paths[n_query:]:
-            samples.append(Sample(p, label, "gallery"))
-    return samples
+def make_gallery_samples(pairs: list[tuple[Path, str]]) -> list[Sample]:
+    """Assign every discovered training image to the gallery split."""
+    return [Sample(path=path, label=label, split="gallery") for path, label in pairs]
 
 
 def write_manifest(samples: list[Sample], path: Path = MANIFEST_PATH) -> None:

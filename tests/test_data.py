@@ -1,38 +1,37 @@
 from __future__ import annotations
 
-from collections import Counter
 from pathlib import Path
 
-from src.data import make_splits
+from src.data import discover_images, make_gallery_samples
 
 
-def test_singleton_class_goes_to_gallery_only():
-    pairs = [(Path(f"data/solo/img{i}.jpg"), "solo") for i in range(1)]
-    samples = make_splits(pairs)
-    assert all(s.split == "gallery" for s in samples)
+def test_make_gallery_samples_marks_everything_as_gallery():
+    pairs = [(Path("data/a/1.jpg"), "a"), (Path("data/b/2.jpg"), "b")]
+    samples = make_gallery_samples(pairs)
+
+    assert [s.split for s in samples] == ["gallery", "gallery"]
+    assert [s.label for s in samples] == ["a", "b"]
 
 
-def test_stratified_split_holds_out_queries():
-    pairs = []
-    for cls in ("a", "b", "c"):
-        pairs.extend((Path(f"data/{cls}/img{i}.jpg"), cls) for i in range(10))
-    samples = make_splits(pairs, query_frac=0.2, seed=0)
+def test_discover_images_uses_top_level_folder_as_label(tmp_path: Path):
+    (tmp_path / "place_one").mkdir()
+    (tmp_path / "place_two" / "nested").mkdir(parents=True)
+    (tmp_path / "place_one" / "a.jpg").write_bytes(b"x")
+    (tmp_path / "place_two" / "nested" / "b.jpeg").write_bytes(b"x")
 
-    by_split: dict[str, Counter] = {
-        "gallery": Counter(),
-        "query": Counter(),
-    }
-    for s in samples:
-        by_split[s.split][s.label] += 1
+    pairs = discover_images(tmp_path)
 
-    for cls in ("a", "b", "c"):
-        assert by_split["query"][cls] >= 1
-        assert by_split["gallery"][cls] >= 1
-        assert by_split["query"][cls] + by_split["gallery"][cls] == 10
+    assert [(path.name, label) for path, label in pairs] == [
+        ("a.jpg", "place_one"),
+        ("b.jpeg", "place_two"),
+    ]
 
 
-def test_split_is_deterministic_given_seed():
-    pairs = [(Path(f"data/x/img{i}.jpg"), "x") for i in range(8)]
-    a = make_splits(pairs, seed=123)
-    b = make_splits(pairs, seed=123)
-    assert [(str(s.path), s.split) for s in a] == [(str(s.path), s.split) for s in b]
+def test_discover_images_ignores_non_image_files(tmp_path: Path):
+    (tmp_path / "place").mkdir()
+    (tmp_path / "place" / "a.txt").write_text("x")
+    (tmp_path / "place" / "b.jpg").write_bytes(b"x")
+
+    pairs = discover_images(tmp_path)
+
+    assert [(path.name, label) for path, label in pairs] == [("b.jpg", "place")]

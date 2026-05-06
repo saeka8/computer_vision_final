@@ -11,14 +11,15 @@ Three retrieval tracks share one data loader, index, and evaluation harness:
 - **CNN baseline** — small supervised CNN trained on gallery labels, then
   reused as an embedding extractor for retrieval.
 
-Both produce L2-normalized vectors that plug into the same FAISS index.
+All three produce L2-normalized vectors that plug into the same FAISS index.
 
 ## Repo layout
 
 ```
 src/            # library code (data, features, index, retrieve, evaluate, app)
 scripts/        # CLI entry points (prepare_data, build_index, run_eval)
-data/           # captured photos, one folder per location
+data/           # training / gallery photos, one folder per location
+test/           # held-out query photos, one folder per location
 results/        # built indices + eval JSONs (gitignored)
 tests/          # pytest suite
 report/         # final write-up + figures
@@ -35,7 +36,7 @@ pip install -r requirements.txt
 ## Reproduce
 
 ```bash
-# 1. Normalize data and write the manifest.
+# 1. Normalize data and write the manifest for the full training set.
 python scripts/prepare_data.py
 
 # 2. Build all indices.
@@ -43,7 +44,7 @@ python scripts/build_index.py --method deep
 python scripts/build_index.py --method cnn
 python scripts/build_index.py --method classical
 
-# 3. Evaluate on the held-out query split.
+# 3. Evaluate against the separate test folder.
 python scripts/run_eval.py --method deep
 python scripts/run_eval.py --method cnn
 python scripts/run_eval.py --method classical

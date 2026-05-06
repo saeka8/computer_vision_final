@@ -44,10 +44,9 @@ def get_embedder(name: str):
     model_prefix = REPO_ROOT / "results" / name
     if hasattr(e, "load") and e.load(model_prefix):
         return e
-    # classical needs a codebook, cnn needs supervised fitting on gallery labels
-    from src.data import by_split, load_manifest
+    from src.data import load_manifest
 
-    e.fit([s.path for s in by_split(load_manifest(), "gallery")])
+    e.fit([s.path for s in load_manifest()])
     return e
 
 embedder = get_embedder(method)

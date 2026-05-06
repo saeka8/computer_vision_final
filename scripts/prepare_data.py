@@ -5,7 +5,7 @@ What it does:
   2. Deletes any 0-byte placeholder files at the top level of ``data/``
      (remnants of drag-and-drop for locations that were never photographed).
   3. Walks ``data/`` to discover every image.
-  4. Stratified split → writes ``data/manifest.csv``.
+  4. Writes ``data/manifest.csv`` with every ``data/`` image in gallery.
   5. Prints per-class counts and flags data-quality issues.
 
 Run from the repo root:
@@ -26,7 +26,7 @@ from src.data import (  # noqa: E402
     DATA_DIR,
     MANIFEST_PATH,
     discover_images,
-    make_splits,
+    make_gallery_samples,
     write_manifest,
 )
 
@@ -78,23 +78,20 @@ def main() -> int:
         print("ERROR: no images found", file=sys.stderr)
         return 1
 
-    samples = make_splits(pairs)
+    samples = make_gallery_samples(pairs)
     write_manifest(samples)
 
     counts = Counter(s.label for s in samples)
     gallery = Counter(s.label for s in samples if s.split == "gallery")
-    queries = Counter(s.label for s in samples if s.split == "query")
 
     print()
     print(f"Manifest written: {MANIFEST_PATH.relative_to(REPO_ROOT)}")
     print(f"Total images: {len(samples)} across {len(counts)} classes")
     print()
-    print(f"{'class':<30} {'total':>6} {'gallery':>8} {'query':>6}")
-    print("-" * 54)
+    print(f"{'class':<30} {'total':>6} {'gallery':>8}")
+    print("-" * 46)
     for label in sorted(counts):
-        print(
-            f"{label:<30} {counts[label]:>6} {gallery[label]:>8} {queries[label]:>6}"
-        )
+        print(f"{label:<30} {counts[label]:>6} {gallery[label]:>8}")
 
     print()
     issues: list[str] = []
@@ -106,8 +103,8 @@ def main() -> int:
     single_image_classes = [c for c, n in counts.items() if n < 2]
     if single_image_classes:
         issues.append(
-            f"{len(single_image_classes)} classes have <2 photos "
-            f"(gallery-only, never queried): {single_image_classes}"
+            f"{len(single_image_classes)} classes have only 1 training photo: "
+            f"{single_image_classes}"
         )
     thin_classes = [c for c, n in counts.items() if 2 <= n < 4]
     if thin_classes:

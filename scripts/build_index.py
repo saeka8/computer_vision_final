@@ -22,7 +22,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.data import by_split, load_manifest  # noqa: E402
+from src.data import load_manifest  # noqa: E402
 from src.index import RetrievalIndex  # noqa: E402
 from src.retrieve import build_method, embed_paths  # noqa: E402
 
@@ -34,8 +34,8 @@ def main() -> int:
     args = ap.parse_args()
 
     samples = load_manifest()
-    gallery = by_split(samples, "gallery")
-    train = by_split(samples, "gallery")
+    gallery = samples
+    train = samples
 
     embedder = build_method(args.method)
     print(f"[{embedder.name}] fitting on {len(train)} images ...")

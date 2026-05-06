@@ -1,4 +1,4 @@
-"""Evaluate a saved index against the held-out query split.
+"""Evaluate a saved index against the held-out test folder.
 
     python scripts/run_eval.py --method deep
 
@@ -24,7 +24,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.data import by_split, load_manifest  # noqa: E402
+from src.data import TEST_DIR, discover_images, load_manifest  # noqa: E402
 from src.evaluate import evaluate  # noqa: E402
 from src.index import RetrievalIndex  # noqa: E402
 from src.retrieve import build_method, embed_paths  # noqa: E402
@@ -38,9 +38,9 @@ def main() -> int:
     args = ap.parse_args()
 
     samples = load_manifest()
-    queries = by_split(samples, "query")
-    if not queries:
-        print("ERROR: no query samples in the manifest", file=sys.stderr)
+    test_pairs = discover_images(TEST_DIR)
+    if not test_pairs:
+        print(f"ERROR: no test images found under {TEST_DIR}", file=sys.stderr)
         return 1
 
     index = RetrievalIndex(dim=0)  # dim is overwritten on load
@@ -53,10 +53,11 @@ def main() -> int:
     if hasattr(embedder, "load"):
         loaded = bool(embedder.load(model_prefix))
     if not loaded:
-        embedder.fit([s.path for s in by_split(samples, "gallery")])
-    query_vecs = embed_paths([s.path for s in queries], embedder)
+        embedder.fit([s.path for s in samples])
+    query_paths = [path for path, _ in test_pairs]
+    query_vecs = embed_paths(query_paths, embedder)
 
-    truths = [s.label for s in queries]
+    truths = [label for _, label in test_pairs]
     result = evaluate(index, query_vecs, truths, k=args.k)
 
     out_path = Path(args.in_dir) / f"{args.method}.eval.json"
