@@ -59,10 +59,12 @@ if upload is not None:
     hits = index.search(vec, k=k)
 
     st.subheader("Top-K matches")
-    cols = st.columns(min(k, 5))
-    for col, hit in zip(cols, hits):
-        with col:
-            try:
-                st.image(hit.path, caption=f"{hit.label}\nscore={hit.score:.3f}")
-            except Exception:  # noqa: BLE001
-                st.write(f"{hit.label} ({hit.score:.3f})")
+    for start in range(0, len(hits), 5):
+        row_hits = hits[start : start + 5]
+        cols = st.columns(len(row_hits))
+        for col, hit in zip(cols, row_hits):
+            with col:
+                try:
+                    st.image(hit.path, caption=f"{hit.label}\nscore={hit.score:.3f}")
+                except Exception:  # noqa: BLE001
+                    st.write(f"{hit.label} ({hit.score:.3f})")
