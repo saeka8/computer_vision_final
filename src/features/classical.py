@@ -7,6 +7,7 @@ Reference:
 
 from __future__ import annotations
 
+import pickle
 from pathlib import Path
 
 import cv2
@@ -85,6 +86,33 @@ class SiftVladEmbedder:
             self._pca = PCA(n_components=n_components, whiten=True)
             self._pca.fit(vlads)
             self.dim = n_components
+
+    def save(self, prefix: Path) -> None:
+        if self._centers is None:
+            return
+        prefix.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "n_clusters": self.n_clusters,
+            "pca_dim": self.pca_dim,
+            "dim": self.dim,
+            "centers": self._centers,
+            "pca": self._pca,
+        }
+        with prefix.with_suffix(".pkl").open("wb") as f:
+            pickle.dump(payload, f)
+
+    def load(self, prefix: Path) -> bool:
+        path = prefix.with_suffix(".pkl")
+        if not path.exists():
+            return False
+        with path.open("rb") as f:
+            payload = pickle.load(f)
+        self.n_clusters = int(payload["n_clusters"])
+        self.pca_dim = payload["pca_dim"]
+        self.dim = int(payload["dim"])
+        self._centers = payload["centers"]
+        self._pca = payload["pca"]
+        return True
 
     def embed(self, image: np.ndarray) -> np.ndarray:
         if self._centers is None:

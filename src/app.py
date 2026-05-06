@@ -49,12 +49,12 @@ def get_embedder(name: str):
     e.fit([s.path for s in load_manifest()])
     return e
 
-embedder = get_embedder(method)
-
 upload = st.file_uploader("Upload a query photo", type=["jpg", "jpeg", "png"])
 if upload is not None:
     img = Image.open(upload).convert("RGB")
     st.image(img, caption="Query", width=400)
+    with st.spinner(f"Loading {method} embedder..."):
+        embedder = get_embedder(method)
     vec = embedder.embed(np.asarray(img))
     hits = index.search(vec, k=k)
 
